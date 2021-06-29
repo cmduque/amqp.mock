@@ -112,6 +112,7 @@ public class ClientHandlerTest {
         verify(clientHandler, times(1)).startConnection();
         verifyStatic(Frame.class, times(1));
         Frame.readFrom(dataInputStream);
+        verify(dataInputStream, times(1)).close();
         verifyNoMoreInteractions(clientHandler, frame, dataInputStream, dataOutputStream);
     }
 
