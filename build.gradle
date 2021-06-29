@@ -1,0 +1,91 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'org.sonarqube' version '3.0'
+    id 'maven-publish'
+    id 'signing'
+}
+
+group 'io.github.cmduque'
+version '0.1'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'com.rabbitmq', name: 'amqp-client', version: '3.6.5'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
+
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.10'
+    annotationProcessor 'org.projectlombok:lombok:1.18.10'
+
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: '2.0.2'
+    testCompile group: 'org.powermock', name: 'powermock-api-mockito2', version: '2.0.2'
+}
+
+tasks['sonarqube'].dependsOn test
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+publishing {
+    repositories {
+        maven {
+            name = 'MavenCentral'
+            def releasesRepoUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2'
+            def snapshotsRepoUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots'
+            url = version.endsWith("SNAPSHOT") ? snapshotsRepoUrl : releasesRepoUrl
+            credentials {
+                username = findProperty("SONATYPE_USER")
+                password = findProperty("SONATYPE_PASSWORD")
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                name = 'amqp.mock'
+                description = 'AMQP Mock Server for testing'
+                url = 'https://github.com/cmduque/amqp.mock'
+                licenses {
+                    license {
+                        name = 'Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0'
+                    }
+                }
+                developers {
+                    developer {
+                        id = ' cmduque'
+                        name = 'Carlos Mario Duque'
+                        email = 'cmduque@gmail.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/cmduque/amqp.mock.git'
+                    developerConnection = 'scm:git:https://github.com/cmduque/amqp.mock.git'
+                    url = 'https://github.com/cmduque/amqp.mock'
+                }
+            }
+        }
+    }
+
+}
+
+ext.base64Decode = { String base64Val ->
+    if (base64Val != null && !base64Val.isEmpty())
+        return new String(Base64.getDecoder().decode( base64Val )).trim()
+    else
+        return null
+}
+
+signing {
+    useInMemoryPgpKeys( base64Decode(findProperty("SIGNING_KEY")), findProperty("SIGNING_PASSWORD"))
+    sign publishing.publications.mavenJava
+}

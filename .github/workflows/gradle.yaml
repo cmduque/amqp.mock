@@ -1,0 +1,15 @@
+name: Publish
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '8'
+      - name: Build and Publish
+        run: ./gradlew -PSONATYPE_USER="${{ secrets.SONATYPE_USER }}" -PSONATYPE_PASSWORD="${{ secrets.SONATYPE_PASSWORD }}"  -PSIGNING_KEY="${{ secrets.SIGNING_KEY }}" -PSIGNING_PASSWORD="${{ secrets.SIGNING_PASSWORD }}" build publish --stacktrace
